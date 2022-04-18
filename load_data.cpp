@@ -21,7 +21,7 @@ void nii2v3draw(QString Qfileinput, unsigned char* &img, long long *&sz_img, int
 	{
 		unsigned char * cp0 = (unsigned char *)nim->data;
 		//unsigned char *img = nullptr;
-		img = new unsigned char[sz_img[0] * sz_img[1] * sz_img[2]];//å»ºç«‹v3dæ•°ç»„
+		img = new unsigned char[sz_img[0] * sz_img[1] * sz_img[2]];//½¨Á¢v3dÊý×é
 		for (int i = 0; i < nim->nvox; i++)
 		{
 			img[i] = cp0[i];
@@ -31,8 +31,8 @@ void nii2v3draw(QString Qfileinput, unsigned char* &img, long long *&sz_img, int
 	else if (datatype_f == 16)
 	{
 		v3d_float32 *nii = (float *)nim->data;
-		float *img1 = nullptr;
-		img1 = new float[sz_img[0] * sz_img[1] * sz_img[2]];//å»ºç«‹v3dæ•°ç»„
+		float *img1 = NULL;
+		img1 = new float[sz_img[0] * sz_img[1] * sz_img[2]];//½¨Á¢v3dÊý×é
 		for (int i = 0; i < nim->nvox; i++)
 		{
 			img1[i] = nii[i];
@@ -43,8 +43,8 @@ void nii2v3draw(QString Qfileinput, unsigned char* &img, long long *&sz_img, int
 	else if (datatype_f == 512)
 	{
 		v3d_uint16 *nii = (unsigned short *)nim->data;
-		unsigned short *img1 = nullptr;
-		img1 = new unsigned short[sz_img[0] * sz_img[1] * sz_img[2]];//å»ºç«‹v3dæ•°ç»„
+		unsigned short *img1 = NULL;
+		img1 = new unsigned short[sz_img[0] * sz_img[1] * sz_img[2]];//½¨Á¢v3dÊý×é
 		for (int i = 0; i < nim->nvox; i++)
 		{
 			img1[i] = nii[i];
@@ -58,7 +58,7 @@ void nii2v3draw(QString Qfileinput, unsigned char* &img, long long *&sz_img, int
 void v3draw2nii(string Qfileoutput, unsigned char *img, long long *sz_img, int type)
 {
 
-	nifti_image *nim = nifti_simple_init_nim(sz_img, type);//ä½¿ç”¨å‡½æ•°åˆ›å»ºä¸€ä¸ªåŸºç¡€çš„niftiæ•°ç»„
+	nifti_image *nim = nifti_simple_init_nim(sz_img, type);//Ê¹ÓÃº¯Êý´´½¨Ò»¸ö»ù´¡µÄniftiÊý×é
 	nim->nx = sz_img[0];
 	nim->ny = sz_img[1];
 	nim->nz = sz_img[2];
@@ -137,6 +137,7 @@ bool l_loadImage(QString Qfileinput, unsigned char* &img,  long long *&sz, int &
 				image_float32[i] = img_f32[i];
 			}
 		}
+
 	}*/
 
 	return true;
@@ -404,7 +405,7 @@ bool loadImageData(Parameter input_Parameter,QString data_file, QString qs_filen
 
 
 
-//è½½å…¥ç‚¹
+//ÔØÈëµã
 
 bool LoadLandmarksData(vector<point3D64F> &vec_corners, vector<point3D64F> &fine_sub_corner, vector<point3D64F> &aver_corner, vector<int> &label, QString data_file,
 	QString fine_filename, long long *sz_img, Parameter &input_Parameter, float  **** p_img_label_4d,
@@ -538,7 +539,7 @@ bool LoadLandmarksData(vector<point3D64F> &vec_corners, vector<point3D64F> &fine
 				{
 					clock_t update_sub_corner_time;
 					update_sub_corner_time = clock();
-					update_sub_corner(qs_filename_img_sub_seg, fmost_label_edge, fmost_label_edge_4d, fine_sub_corner);
+					update_sub_corner(input_Parameter,qs_filename_img_sub_seg, fmost_label_edge, fmost_label_edge_4d, fine_sub_corner);
 					printf("\t>>update_sub_corner_time consume %.2f s\n", (float)(clock() - update_sub_corner_time) / CLOCKS_PER_SEC);
 				}
 				printf("\t>>auto_update_time consume %.2f s\n", (float)(clock() - auto_update_time) / CLOCKS_PER_SEC);
@@ -642,7 +643,7 @@ bool outline_detec(float *& p_img_input, long long *& sz_img_input, float *& img
 	return true;
 }
 
-bool update_sub_corner(QString qs_filename_img_sub_seg, float * &fmost_label, float  **** &fmost_label_4d,  vector<point3D64F> & fine_sub_corner)
+bool update_sub_corner(Parameter &input_Parameter, QString qs_filename_img_sub_seg, float * &fmost_label, float  **** &fmost_label_4d, vector<point3D64F> & fine_sub_corner)
 {
 	
 	vector<point3D64F> fine_sub_corner_raw = fine_sub_corner;
@@ -826,7 +827,11 @@ bool update_sub_corner(QString qs_filename_img_sub_seg, float * &fmost_label, fl
 
 	vector<point3D64F> warp_corner = fine_sub_corner_raw;
 	at_lam =100;
-	auto_warp_marker(at_lam, fine_sub_corner_raw, fine_sub_corner, warp_corner);
+	if (input_Parameter.GPU_acceleration == 0)auto_warp_marker(at_lam, fine_sub_corner_raw, fine_sub_corner, warp_corner);
+	if (input_Parameter.GPU_acceleration == 1)auto_warp_marker_gpu(at_lam, fine_sub_corner_raw, fine_sub_corner, warp_corner);
+	
 	fine_sub_corner = warp_corner;
 	if (fmost_label_edge) 			{ delete[]fmost_label_edge;	 	fmost_label_edge = 0; }
 }
+	
+
